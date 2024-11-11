@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build: .
@@ -16,7 +14,7 @@ services:
     volumes:
       - app_static_files:/srv/app/static:rw
       - app_media_files:/srv/app/media:rw
-      - .:/srv/app
+      - .:/app
 
   db:
     tty: true
@@ -76,10 +74,11 @@ services:
       - celery
       - celery_beat
     command: celery -A core flower
-    volumes:
-      -.:/app
     ports:
-      -"5555:5555"
+      - 5555:5555
+    volumes:
+      - .:/app
+    
 
 volumes:
   dev-db-data: {}

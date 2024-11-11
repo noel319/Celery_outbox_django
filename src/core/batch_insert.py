@@ -1,5 +1,5 @@
 from django.db import transaction
-from core.models import Outbox
+from users.models import Outbox
 import logging
 
 logger = logging.getLogger(__name__)

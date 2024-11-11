@@ -1,6 +1,6 @@
 import json
 from celery import shared_task
-from core.models import Outbox
+from users.models import Outbox
 from core.event_log_client import EventLogClient
 import structlog
 import sentry_sdk

@@ -1,7 +1,7 @@
 import pytest
 from django.utils import timezone
 from celery.exceptions import MaxRetriesExceededError
-from core.models import Outbox
+from users.models import Outbox
 from core.tasks import push_to_clickhouse
 import uuid
 from unittest.mock import patch
