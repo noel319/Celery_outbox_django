@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    restart: always
+    depends_on:
+      - db
+      - clickhouse
+    command: [ "../docker/wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000" ]
+    ports:
+      - 8000:8000
+    volumes:
+      - app_static_files:/srv/app/static:rw
+      - app_media_files:/srv/app/media:rw
+      - .:/srv/app
+
+  db:
+    tty: true
+    image: postgres:16-alpine
+    volumes:
+      - ./docker/postgres/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - dev-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: test_pg_user
+      POSTGRES_PASSWORD: 123456
+      DATABASE_USER: test_user
+      DATABASE_PASSWORD: 123456
+      DATABASE_NAME: test_database
+    ports:
+      - 5432:5432
+
+  redis:
+    image: redis:6-alpine
+    networks:
+      - default
+    ports:
+      - 6379:6379
+
+  clickhouse:
+    image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
+    ports:
+      - 8123:8123
+    volumes:
+      - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+
+volumes:
+  dev-db-data: {}
+  app_media_files: { }
+  app_static_files: { }

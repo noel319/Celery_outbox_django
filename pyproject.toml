@@ -1,0 +1,59 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "core.settings"
+env = [
+    "DEBUG = true",
+    "CELERY_ALWAYS_EAGER = on",
+]
+python_files = "*_tests.py tests/test_*.py"
+addopts = "-vrs -r fE --tb=short --reuse-db --no-migrations --disable-warnings -p no:warnings"
+
+[tool.ruff]
+line-length = 120
+lint.ignore = [
+    'ANN101',
+    'ANN102',
+    'Q000',
+    'S101',
+]
+lint.select = [
+    'W',
+    'ARG',
+    'ANN',
+    'ASYNC',
+    'B',
+    'COM',
+    'C4',
+    'C90',
+    'DTZ',
+    'E',
+    'ERA',
+    'F',
+    'UP',
+    'T10',
+    'T20',
+    'Q',
+    'S',
+    'I',
+    'N',
+    'YTT',
+    'PTH',
+]
+
+lint.exclude = [
+    '.git',
+    '.mypy_cache',
+    '.ruff_cache',
+    '__pycache__',
+    'src/core/celery.py',
+    'src/manage.py',
+]
+
+lint.fixable = ["ALL"]
+
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+target-version = "py311"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 4
