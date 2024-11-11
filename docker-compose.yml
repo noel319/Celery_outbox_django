@@ -7,6 +7,9 @@ services:
     depends_on:
       - db
       - clickhouse
+      - redis
+      - celery
+      - celery_beat
     command: [ "../docker/wait-for-it.sh", "db:5432", "--", "python", "manage.py", "runserver", "0.0.0.0:8000" ]
     ports:
       - 8000:8000
@@ -39,11 +42,44 @@ services:
 
   clickhouse:
     image: "clickhouse/clickhouse-server:23.8.2.7-alpine"
+    depends_on:
+      - db      
     ports:
       - 8123:8123
     volumes:
       - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  celery:
+    build: .
+    depends_on:
+      - db
+      - redis
+      - clickhouse
+    command: celery -A core worker --loglevel=INFO
+    volumes:
+      - .:/app
+  
+  celery_beat:
+    build: .
+    depends_on:
+      - db
+      - redis
+      - clickhouse
+    command: celery -A core beat --loglevel=INFO
+    volumes:
+      - .:/app
+  
+  flower:
+    build: .
+    depends_on:
+      - redis
+      - celery
+      - celery_beat
+    command: celery -A core flower
+    volumes:
+      -.:/app
+    ports:
+      -"5555:5555"
 
 volumes:
   dev-db-data: {}
