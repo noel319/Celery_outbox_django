@@ -1,7 +1,4 @@
- # Event Logging System with Outbox Pattern 
- 
- ## Summary
-
+ Event Logging System with Outbox Pattern Summary
 This project is a robust event logging system designed to handle high-throughput event data, store events in PostgreSQL using the outbox pattern, and process them with Celery to batch insert into ClickHouse. This setup ensures data reliability, reduces database load by batching inserts, and provides transactionality, improving resilience against worker failures.
 
 Key components:
