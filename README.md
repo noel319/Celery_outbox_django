@@ -20,28 +20,56 @@ Ensure you have Docker and Docker Compose installed.
 ### Steps
 Clone the repository:
 
-bash
-Copy code
-git clone <repository-url>
-cd <repository-folder>
+git clone [repository-url](https://github.com/noel319/Celery_outbox_django.git)>
+
+cd [Celery_outbox_django]
+
 ### Set up environment variables:
 
 Copy the example environment variables:
-bash
-Copy code
-cp src/core/.env.example src/core/.env
+
+*cp src/core/.env.ci src/core/.env*
+
 Modify src/core/.env with the appropriate values for your database and other configurations.
+
 ### Build and Start the Docker Containers:
 
-bash
-Copy code
-docker-compose up --build
-Run Migrations: After all services are up, apply the database migrations:
+- Docker compose up
 
-bash
-Copy code
-docker-compose exec web python src/manage.py migrate
-Access the Application and Flower:
+*make run*
+
+- Run Migrations: After all services are up, apply the database migrations:
+
+*make migrations*
+
+- Run Migrate
+
+*make migrate*
+
+- Run Test
+
+*make test*
+
+-Run Lint
+
+*make lint*
+
+- **if database does not migrate, use this sql code to create outbox table in postgresql.**
+
+ CREATE TABLE outbox (
+    id BIGSERIAL PRIMARY KEY,
+    event_type VARCHAR(255) NOT NULL,
+    event_date_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    environment VARCHAR(255) NOT NULL,
+    event_context JSONB NOT NULL,
+    metadata_version BIGINT DEFAULT 1,
+    processed BOOLEAN DEFAULT FALSE
+);
+
+CREATE INDEX outbox_processed_idx ON outbox (processed);
+
+
+### Access the Application and Flower:
 
 Django application: http://localhost:8000
 Flower monitoring: http://localhost:5555
@@ -65,9 +93,9 @@ Monitoring with Flower and Sentry:
 
 Flower provides real-time monitoring of Celery tasks, showing active, scheduled, and completed tasks.
 Sentry captures any errors and traces transactions, offering insights into retry attempts and performance.
-System Architecture Diagram
-plaintext
-Copy code
+### System Architecture Diagram
+
+
                     +---------------+
                     |  Event Source |
                     +-------+-------+
@@ -87,6 +115,8 @@ Copy code
                       +------------+
                       | ClickHouse  |
                       +------------+
+
+
 This flow ensures that events are reliably stored in PostgreSQL before being processed by Celery and sent to ClickHouse in batches.
 
 ## Improved Solution
