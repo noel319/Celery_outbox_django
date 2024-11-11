@@ -4,9 +4,25 @@ from pathlib import Path
 import environ
 import sentry_sdk
 import structlog
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
 
 env = environ.Env(
     DEBUG=(bool, False),
+)
+
+
+SENTRY_DSN = env("SENTRY_CONFIG_DSN", default="")
+SENTRY_ENVIRONMENT = env("SENTRY_CONFIG_ENVIRONMENT", default="development")
+SENTRY_TRACES_SAMPLE_RATE = 1.0 
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=SENTRY_ENVIRONMENT,
+        integrations=[DjangoIntegration(), CeleryIntegration()],
+        traces_sample_rate=1.0,
+        attach_stacktrace=False,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +46,7 @@ INSTALLED_APPS = [
 
     # project apps
     'users',
+    'core'
 ]
 
 MIDDLEWARE = [
@@ -110,7 +127,7 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_BROKER = env("CELERY_BROKER", default="redis://redis:6379/0")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
