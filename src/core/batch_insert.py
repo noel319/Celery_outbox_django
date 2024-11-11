@@ -1,10 +1,11 @@
 from django.db import transaction
 from users.models import Outbox
 import logging
+from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
-def batch_insert_events(event_data_list, batch_size=1000):
+def batch_insert_events(event_data_list: List[Dict], batch_size: int = 1000) -> None:
     batches = [
         event_data_list[i:i + batch_size] for i in range(0, len(event_data_list), batch_size)
     ]

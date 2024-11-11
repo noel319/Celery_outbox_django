@@ -5,13 +5,14 @@ from core.event_log_client import EventLogClient
 import structlog
 import sentry_sdk
 from sentry_sdk import capture_exception
-from sentry_sdk.tracing import Transaction
+from sentry_sdk import start_transaction
+
 logger = structlog.get_logger(__name__)
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=3)
-def push_to_clickhouse(self):
+def push_to_clickhouse(self) -> None:
     try:
-        with sentry_sdk.start_transaction(op="task", name="push_to_clickhouse") as Transaction:           
+        with start_transaction(op="task", name="push_to_clickhouse"):         
             events = Outbox.objects.filter(processed=False)
             if not events.exists():
                 return
