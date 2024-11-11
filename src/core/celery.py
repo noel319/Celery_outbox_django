@@ -11,3 +11,9 @@ app.autodiscover_tasks()
 app.conf.update(
     broker_connection_retry_on_startup=True,    
 )
+app.conf.beat_schedule = {
+    'push-to-clickhouse-every-minute': {
+        'task': 'core.tasks.push_to_clickhouse',
+        'schedule': crontab(minute='*/1'),  # every 1 minute
+    },
+}
