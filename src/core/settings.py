@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
     # project apps
     'users',
+    'core'
 ]
 
 MIDDLEWARE = [
@@ -110,7 +111,7 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
+CELERY_BROKER = env("CELERY_BROKER", default="redis://redis:6379/0")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
