@@ -122,52 +122,34 @@ This flow ensures that events are reliably stored in PostgreSQL before being pro
 ## Improved Solution
 Through research on the outbox pattern and Celery usage, here are some recommended enhancements for greater reliability and efficiency.
 
-### 1. Optimized Outbox Processing with Bulk Insertion and Deduplication
+#### - Optimized Outbox Processing with Bulk Insertion and Deduplication
 A common challenge with high-throughput systems is handling large volumes of events without overloading the database. To improve performance:
 
 Batch Insert with Django's bulk_create: Use Django’s bulk_create for high-throughput event logging to PostgreSQL to reduce transaction overhead.
 Deduplication Mechanism: Implement a deduplication check on the outbox table by defining unique constraints for events, which ensures each event is processed only once, even after retries.
-### 2. Enhanced Celery Configuration for Scalability and Reliability
+#### - Enhanced Celery Configuration for Scalability and Reliability
 To make Celery more resilient and scalable:
 
 Task Rate Limiting: Set Celery rate limits to control task consumption based on processing capacity, preventing overload during traffic spikes.
 Retry Policies: Configure an exponential backoff retry strategy for Celery to handle intermittent failures gracefully, which is particularly helpful for network-related errors.
-Example retry configuration:
 
-python
-Copy code
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_backoff_max=600, max_retries=10)
-def push_to_clickhouse(self):
-    ...
-This configuration:
-
-Uses retry_backoff=True for exponential backoff.
-Limits retries to every 10 minutes (retry_backoff_max=600) with a maximum of 10 retries.
-### 3. Partitioned ClickHouse Table for Optimized Event Storage
+#### - Partitioned ClickHouse Table for Optimized Event Storage
 Partitioning can help ClickHouse handle large datasets by reducing the load on individual inserts and reads:
 
 Monthly Partitioning by Event Date: Configure ClickHouse tables to partition data by month using the event date, which improves query performance and makes batch inserts more efficient.
 In init.sql for ClickHouse:
 
-sql
-Copy code
-CREATE TABLE IF NOT EXISTS event_log
-(
-    event_type String,
-    event_date_time DateTime64(6),
-    environment String,
-    event_context String,
-    metadata_version UInt64
-)
-ENGINE = MergeTree()
-PARTITION BY toYYYYMM(event_date_time)
-ORDER BY (event_date_time, event_type)
-SETTINGS index_granularity = 8192;
-### 4. Monitoring and Alerting Enhancements
+
+### - Monitoring and Alerting Enhancements
 Beyond Sentry for error tracking, you could implement:
 
 Prometheus and Grafana: For detailed metrics on task processing, including Celery task counts, worker load, and latency.
 ClickHouse Monitoring: Integrate ClickHouse-specific metrics to monitor insert speeds, storage utilization, and query times.
 Conclusion
 This project demonstrates a reliable, high-throughput event logging system using the outbox pattern and Celery for batch processing. The suggested improvements enhance scalability, performance, and reliability, ensuring the system is equipped to handle high event volumes and operational challenges.
+
+### My word
+ - There is currently a problem with the test logic.
+ - The code works correctly, but I have completed the test part using Sentry, but I have not been able to complete all the functional tests. 
+ - If functional tests are needed, I need to complete more code in this part.
 
