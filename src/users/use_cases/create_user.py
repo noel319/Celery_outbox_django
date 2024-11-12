@@ -1,11 +1,10 @@
 from typing import Any
-
 import structlog
-
 from core.base_model import Model
-from core.event_log_client import EventLogClient
 from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
 from users.models import User
+from users.models import Outbox
+from django.utils import timezone
 
 logger = structlog.get_logger(__name__)
 
@@ -47,21 +46,23 @@ class CreateUser(UseCase):
 
         if created:
             logger.info('user has been created')
-            self._log(user)
+            self._log_to_outbox(user)
             return CreateUserResponse(result=user)
 
         logger.error('unable to create a new user')
         return CreateUserResponse(error='User with this email already exists')
 
-    def _log(self, user: User) -> None:
-        with EventLogClient.init() as client:
-            client.insert(
-                data=[
-                    UserCreated(
-                        email=user.email,
-                        first_name=user.first_name,
-                        last_name=user.last_name,
-                    ),
-                ],
-            )
+    def _log_to_outbox(self, user: User) -> None:
+        Outbox.objects.create(
+            event_type="user_created",
+            event_date_time=timezone.now(),
+            environment="Local",
+            event_context={
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            },
+            metadata_version=1,
+            processed=False
+        )
 

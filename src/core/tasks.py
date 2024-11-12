@@ -4,7 +4,7 @@ from users.models import Outbox
 from core.event_log_client import EventLogClient
 import structlog
 from django.db import transaction
-from sentry_sdk import capture_exception
+
 
 
 logger = structlog.get_logger(__name__)
@@ -31,10 +31,8 @@ def process_unprocessed_events():
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=3)
 def push_to_clickhouse(self):
-    """Celery task to push unprocessed events to ClickHouse."""
     try:
         process_unprocessed_events()
     except Exception as e:
-        capture_exception(e)
         logger.error("Failed to push events to ClickHouse", error=str(e))
         raise
