@@ -150,6 +150,6 @@ This project demonstrates a reliable, high-throughput event logging system using
 
 ### My word
  - There is currently a problem with the test logic.
- - The code works correctly, but I have completed the test part using Sentry, but I have not been able to complete all the functional tests. 
- - If functional tests are needed, I need to complete more code in this part.
+ - The code was completed the test part using Sentry, but It was not be able to complete all the functional tests. 
+ - If functional tests are needed, need to complete more code in this part.
 
