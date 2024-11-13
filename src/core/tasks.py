@@ -4,6 +4,7 @@ from users.models import Outbox
 from core.event_log_client import EventLogClient
 import structlog
 from django.db import transaction
+from core.base_model import Event
 
 
 
@@ -12,16 +13,19 @@ logger = structlog.get_logger(__name__)
 def process_unprocessed_events():
     event_ids = list(Outbox.objects.filter(processed=False).values_list("id", flat=True)[:1000])
     events = Outbox.objects.filter(id__in=event_ids)
-    data = [
-        {
-            "event_type": event.event_type,
-            "event_date_time": event.event_date_time,
-            "environment": event.environment,
-            "event_context": json.dumps(event.event_context),
-            "metadata_version": event.metadata_version
-        }
-        for event in events
-    ]
+    data = []
+    for event in events:
+        try:            
+            event_data = Event(
+                event_type=event.event_type,
+                event_date_time=event.event_date_time,
+                environment=event.environment,
+                event_context=event.event_context,
+                metadata_version=event.metadata_version
+            )           
+            data.append(event_data.dict())
+        except Exception as e:
+            logger.error("Error converting event to Pydantic model", error=str(e))            
     logger.info("Preparing data for ClickHouse insertion", data=data)
     with transaction.atomic():
         with EventLogClient.init() as client:

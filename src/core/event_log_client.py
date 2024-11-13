@@ -2,13 +2,12 @@ import re
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
-
+import json
 import clickhouse_connect
 import structlog
 from clickhouse_connect.driver.exceptions import DatabaseError
 from django.conf import settings
 from django.utils import timezone
-
 from core.base_model import Model
 
 logger = structlog.get_logger(__name__)
@@ -18,6 +17,7 @@ EVENT_LOG_COLUMNS = [
     'event_date_time',
     'environment',
     'event_context',
+    'metadata_version',
 ]
 
 
@@ -67,13 +67,14 @@ class EventLogClient:
             logger.error('failed to execute clickhouse query', error=str(e))
             return
 
-    def _convert_data(self, data: list[Model]) -> list[tuple[Any]]:
+    def _convert_data(self, data: list[dict]) -> list[tuple]:    
         return [
             (
-                self._to_snake_case(event.__class__.__name__),
-                timezone.now(),
-                settings.ENVIRONMENT,
-                event.model_dump_json(),
+                event["event_type"],
+                event["event_date_time"],
+                event["environment"],
+                json.dumps(event["event_context"]),
+                event["metadata_version"],
             )
             for event in data
         ]
