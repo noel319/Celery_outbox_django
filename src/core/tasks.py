@@ -10,9 +10,8 @@ from django.db import transaction
 logger = structlog.get_logger(__name__)
 
 def process_unprocessed_events():
-    events = Outbox.objects.filter(processed=False)[:1000]
-    if not events.exists():
-        return
+    event_ids = list(Outbox.objects.filter(processed=False).values_list("id", flat=True)[:1000])
+    events = Outbox.objects.filter(id__in=event_ids)
     data = [
         {
             "event_type": event.event_type,
@@ -23,9 +22,11 @@ def process_unprocessed_events():
         }
         for event in events
     ]
+    logger.info("Preparing data for ClickHouse insertion", data=data)
     with transaction.atomic():
-        with EventLogClient.init as client:
+        with EventLogClient.init() as client:
             client.insert(data=data)
+            logger.info("Data pushed to ClickHouse", event_count=len(data))
         events.update(processed=True)
         logger.info("Successfully pushed events to ClickHouse", event_count=len(data))
 
