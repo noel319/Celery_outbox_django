@@ -4,25 +4,27 @@ from pathlib import Path
 import environ
 import sentry_sdk
 import structlog
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
 
 env = environ.Env(
     DEBUG=(bool, False),
 )
-
-
-SENTRY_DSN = env("SENTRY_CONFIG_DSN", default="")
-SENTRY_ENVIRONMENT = env("SENTRY_CONFIG_ENVIRONMENT", default="development")
-SENTRY_TRACES_SAMPLE_RATE = 1.0 
-if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        environment=SENTRY_ENVIRONMENT,
-        integrations=[DjangoIntegration(), CeleryIntegration()],
-        traces_sample_rate=1.0,
-        attach_stacktrace=False,
+LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+LOG_FORMATTER = env("LOG_FORMATTER", default="console")
+# Configure structlog
+structlog.configure(
+    processors=[
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,7 +48,7 @@ INSTALLED_APPS = [
 
     # project apps
     'users',
-    'core'
+    'logs',
 ]
 
 MIDDLEWARE = [
@@ -94,7 +96,7 @@ CLICKHOUSE_URI = (
     f'{CLICKHOUSE_PROTOCOL}'
 )
 CLICKHOUSE_EVENT_LOG_TABLE_NAME = 'event_log'
-
+LOG_BATCH_SIZE = env.int("LOG_BATCH_SIZE", default=100)
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -117,7 +119,7 @@ LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = env("TIME_ZONE", default="Europe/Moscow")
 USE_I18N = True
-USE_TZ = True
+USE_TZ = False
 
 MEDIA_URL = env("MEDIA_URL")
 MEDIA_ROOT = env("MEDIA_ROOT")
@@ -127,10 +129,8 @@ STATIC_ROOT = env("STATIC_ROOT")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CELERY_BROKER = env("CELERY_BROKER", default="redis://redis:6379/0")
+CELERY_BROKER = env("CELERY_BROKER", default="redis://localhost:6379/0")
 CELERY_ALWAYS_EAGER = env("CELERY_ALWAYS_EAGER", default=DEBUG)
-CELERY_TASK_ALWAYS_EAGER = True  
-CELERY_TASK_EAGER_PROPAGATES = True
 
 LOG_FORMATTER = env("LOG_FORMATTER", default="console")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
