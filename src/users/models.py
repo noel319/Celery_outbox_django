@@ -23,16 +23,3 @@ class User(TimeStampedModel, AbstractBaseUser):
             return f'{self.first_name} {self.last_name}'
 
         return self.email
-class Outbox(models.Model):
-    event_type = models.CharField(max_length=255)
-    event_date_time = models.DateTimeField(default=timezone.now)
-    environment = models.CharField(max_length=255)
-    event_context = JSONField()
-    metadata_version = models.BigIntegerField(default=1)
-    processed = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = 'outbox'
-        indexes = [
-            models.Index(fields=['processed']),
-        ]

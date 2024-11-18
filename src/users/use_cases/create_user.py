@@ -5,7 +5,7 @@ from core.use_case import UseCase, UseCaseRequest, UseCaseResponse
 from users.models import User
 from users.models import Outbox
 from django.utils import timezone
-
+from django.db import transaction as db_transaction
 logger = structlog.get_logger(__name__)
 
 
@@ -33,7 +33,7 @@ class CreateUser(UseCase):
             'first_name': request.first_name,
             'last_name': request.last_name,
         }
-
+    @db_transaction.atomic
     def _execute(self, request: CreateUserRequest) -> CreateUserResponse:
         logger.info('creating a new user')
 
