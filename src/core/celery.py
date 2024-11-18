@@ -1,19 +1,15 @@
-import os
-from django.conf import settings
 from celery import Celery
-from celery.schedules import crontab
+from django.conf import settings
+import os
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-
-app = Celery("core", broker=settings.CELERY_BROKER)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
+app = Celery("core")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
-app.conf.update(
-    broker_connection_retry_on_startup=True,    
-)
 app.conf.beat_schedule = {
-    'push-to-clickhouse-every-minute': {
-        'task': 'core.tasks.push_to_clickhouse',
-        'schedule': crontab(minute='*/1'),  # every 1 minute
+    "process-outbox-every-minute": {
+        "task": "logs.tasks.process_outbox_task",
+        "schedule": 60.0,  
+        "args": (settings.LOG_BATCH_SIZE,), 
     },
 }
